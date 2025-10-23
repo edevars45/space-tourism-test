@@ -4,12 +4,8 @@ export default {
     "./resources/views/**/*.blade.php",
     "./resources/js/**/*.js",
     "./resources/js/**/*.vue",
+    "./vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php",
   ],
-  theme: {
-    extend: {},
-  },
-  plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'),
-  ],
+  theme: { extend: {} },
+  plugins: [],
 }

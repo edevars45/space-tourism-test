@@ -1,25 +1,15 @@
-/* resources/css/app.css */
+/* resources/css/app.css (Tailwind v3) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@source "../views/**/*.blade.php";
-@source "../js/**/*.{js,ts,vue}";
-@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
-
-@theme {
-  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-display: "Bellefair", serif;
-  --font-condensed: "Barlow Condensed", "Barlow", ui-sans-serif, system-ui, sans-serif;
-}
-
-/* Partie 4 (optionnelle) : base */
+/* Base : je fixe la police par défaut */
 @layer base {
-  html { font-family: var(--font-sans); }
+  html { font-family: 'Barlow', ui-sans-serif, system-ui, sans-serif; }
 }
 
-/* Helpers (utiles si tu veux des classes pour les titres) */
+/* Helpers */
 @layer utilities {
-  .font-display { font-family: var(--font-display); }
-  .font-condensed { font-family: var(--font-condensed); }
+  .font-display { font-family: 'Bellefair', serif; }
+  .font-condensed { font-family: 'Barlow Condensed','Barlow', ui-sans-serif, system-ui, sans-serif; }
 }
