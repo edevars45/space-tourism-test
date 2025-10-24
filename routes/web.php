@@ -1,32 +1,47 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Session;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PlanetController;
 
 /*
-|-----------------------------------------------------------------------------
-| Routes web – Partie 04
-|-----------------------------------------------------------------------------
-| Je redirige l’accueil vers /login pour forcer l’authentification.
+|--------------------------------------------------------------------------
+| Front public
+|--------------------------------------------------------------------------
 */
-Route::redirect('/', '/login');
+Route::get('/', fn () => view('vue.accueil'))->name('accueil');
+Route::get('/destination', fn () => view('vue.destination'))->name('destination');
+Route::get('/equipage', fn () => view('vue.equipage'))->name('equipage');
+Route::get('/technologie', fn () => view('vue.technologie'))->name('technologie');
 
 /*
-|-----------------------------------------------------------------------------
+|--------------------------------------------------------------------------
+| Commutateur de langue (FR/EN)
+|--------------------------------------------------------------------------
+| Enregistre 'fr' ou 'en' en session puis revient à la page précédente.
+| Utilisation : route('lang.switch', 'fr') / route('lang.switch', 'en')
+*/
+Route::get('/lang/{locale}', function (string $locale) {
+    if (in_array($locale, ['fr', 'en'], true)) {
+        Session::put('locale', $locale);
+    }
+    return redirect()->back();
+})->name('lang.switch');
+
+/*
+|--------------------------------------------------------------------------
 | Dashboard (Breeze)
-|-----------------------------------------------------------------------------
-| J’exige un utilisateur connecté et vérifié avant d’afficher le tableau de bord.
+|--------------------------------------------------------------------------
 */
 Route::get('/dashboard', fn () => view('dashboard'))
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
 /*
-|-----------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 | Profil (Breeze)
-|-----------------------------------------------------------------------------
-| Je laisse l’utilisateur gérer son profil une fois connecté.
+|--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -35,25 +50,23 @@ Route::middleware('auth')->group(function () {
 });
 
 /*
-|-----------------------------------------------------------------------------
-| Back-office Admin
-|-----------------------------------------------------------------------------
-| Pour la partie 04, je protège le back-office avec le Gate "admin".
-| Je n’utilise plus 'role:admin' ; je m’appuie sur le middleware natif 'can:admin'.
-| Le Gate 'admin' est défini dans App\Providers\AppServiceProvider::boot().
+|--------------------------------------------------------------------------
+| Back-office Admin (Partie 4 : CRUD Planètes)
+|--------------------------------------------------------------------------
+| Gate 'admin' défini dans App\Providers\AppServiceProvider::boot()
+| (ex: Gate::define('admin', fn(User $u) => $u->is_admin); )
 */
 Route::middleware(['auth', 'can:admin'])
     ->prefix('admin')
     ->as('admin.')
     ->group(function () {
-        // Je fournis le CRUD des planètes, sans la page 'show'.
+        // CRUD des planètes (pas de page 'show' côté BO)
         Route::resource('planets', PlanetController::class)->except('show');
     });
 
 /*
-|-----------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 | Auth (Breeze)
-|-----------------------------------------------------------------------------
-| Je charge les routes d’authentification générées par Breeze.
+|--------------------------------------------------------------------------
 */
 require __DIR__.'/auth.php';
