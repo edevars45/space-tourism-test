@@ -1,13 +1,15 @@
-@import 'tailwindcss';
-@import url('https://fonts.googleapis.com/css2?family=Bellefair&family=Barlow&family=Barlow+Condensed:wght@400;600&display=swap');
+/* resources/css/app.css (Tailwind v3) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* Base : je fixe la police par défaut */
+@layer base {
+  html { font-family: 'Barlow', ui-sans-serif, system-ui, sans-serif; }
+}
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
-
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+/* Helpers */
+@layer utilities {
+  .font-display { font-family: 'Bellefair', serif; }
+  .font-condensed { font-family: 'Barlow Condensed','Barlow', ui-sans-serif, system-ui, sans-serif; }
 }

@@ -3,21 +3,20 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Session;
 
 class SetLocale
 {
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
-        // On récupère la langue stockée en session (fr ou en)
-        // Si aucune langue n’est trouvée, on utilise la langue par défaut du site
+        // Langue depuis la session, sinon langue par défaut de l’app
         $locale = Session::get('locale', config('app.locale'));
 
-        // Laravel utilise cette langue pour toutes les traductions
+        // On applique la langue à Laravel (traductions, validation, etc.)
         App::setLocale($locale);
 
-        // On continue le chargement de la page
         return $next($request);
     }
 }
