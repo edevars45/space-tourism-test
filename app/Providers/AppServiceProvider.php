@@ -2,28 +2,36 @@
 
 namespace App\Providers;
 
+use App\Models\User;                 //  IMPORT DU MODELE USER
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * J’enregistre ici, si besoin, des services applicatifs.
+     * Enregistrer des services applicatifs (si besoin).
      */
     public function register(): void
     {
-        // Rien à enregistrer pour la partie 04.
+        // Rien à enregistrer pour l’instant.
     }
 
     /**
-     * Au démarrage, je déclare le Gate "admin".
-     * Je décide qu’un utilisateur est admin si sa colonne users.role vaut 'admin'.
-     * Cela me permet d’utiliser le middleware natif 'can:admin' dans mes routes.
+     * Déclarer les Gates/Policies.
      */
     public function boot(): void
     {
-        Gate::define('admin', function ($user) {
-            return ($user->role ?? 'user') === 'admin';
+        Gate::define('admin', function (User $user) {
+            // UNE logique et laisse les autres en commentaire.
+
+            //  Spatie\Permission (recommandé si tu as HasRoles sur User)
+            return $user->hasRole('admin');
+
+            // OU avec une colonne booléenne en base
+            // return (bool) $user->is_admin;
+
+            // OU avec une colonne texte 'role'
+            // return $user->role === 'admin';
         });
     }
 }

@@ -1,3 +1,4 @@
+<x-app-layout>
 <div class="grid grid-cols-1 gap-4">
     <div>
         <label class="block text-sm font-medium">Nom (FR)</label>
@@ -52,3 +53,4 @@
         @endif
     </div>
 </div>
+</x-app-layout>

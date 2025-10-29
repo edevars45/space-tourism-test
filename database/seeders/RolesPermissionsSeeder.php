@@ -3,42 +3,54 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
 class RolesPermissionsSeeder extends Seeder
 {
-    /**
-     * Je crée les permissions/rôles pour le back-office "Planètes".
-     */
     public function run(): void
     {
-        // Je nettoie le cache Spatie pour repartir propre.
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        // Toujours vider le cache interne de Spatie avant d'altérer la matrice
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
-        // Je définis les permissions du CRUD Planètes.
+        // --- Permissions (adaptées au TP Planètes)
         $perms = [
-            'planets.view',   // lister/voir
-            'planets.create', // créer
-            'planets.edit',   // modifier
-            'planets.delete', // supprimer
+            'planets.view',
+            'planets.create',
+            'planets.edit',
+            'planets.delete',
+            'users.manage',
         ];
 
-        // Je crée (ou retrouve) chaque permission.
-        foreach ($perms as $name) {
-            Permission::firstOrCreate([
-                'name'       => $name,
-                'guard_name' => 'web',
-            ]);
+        foreach ($perms as $p) {
+            Permission::firstOrCreate(['name' => $p, 'guard_name' => 'web']);
         }
 
-        // Je crée les rôles nécessaires.
+        // --- Rôles
         $admin  = Role::firstOrCreate(['name' => 'admin',  'guard_name' => 'web']);
         $editor = Role::firstOrCreate(['name' => 'editor', 'guard_name' => 'web']);
+        $author = Role::firstOrCreate(['name' => 'author', 'guard_name' => 'web']);
+        $viewer = Role::firstOrCreate(['name' => 'viewer', 'guard_name' => 'web']);
 
-        // J’assigne les permissions aux rôles.
-        $admin->syncPermissions($perms); // admin a tout
-        $editor->syncPermissions(['planets.view', 'planets.create', 'planets.edit']); // éditeur limité
+        // --- Matrice rôles → permissions
+        $admin->syncPermissions(Permission::all());
+
+        $editor->syncPermissions([
+            'planets.view',
+            'planets.create',
+            'planets.edit',
+        ]);
+
+        $author->syncPermissions([
+            'planets.view',
+            'planets.create',
+        ]);
+
+        $viewer->syncPermissions([
+            'planets.view',
+        ]);
+
+        // Rafraîchir le cache des permissions
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

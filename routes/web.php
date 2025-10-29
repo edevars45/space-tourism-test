@@ -7,26 +7,24 @@ use App\Http\Controllers\Admin\PlanetController;
 
 /*
 |--------------------------------------------------------------------------
-| Front public
+| Front-office public (pages maquette)
 |--------------------------------------------------------------------------
+| Noms de routes : accueil, destination, equipage, technologie
 */
 Route::get('/', fn () => view('vue.accueil'))->name('accueil');
 Route::get('/destination', fn () => view('vue.destination'))->name('destination');
 Route::get('/equipage', fn () => view('vue.equipage'))->name('equipage');
 Route::get('/technologie', fn () => view('vue.technologie'))->name('technologie');
-
 /*
 |--------------------------------------------------------------------------
-| Commutateur de langue (FR/EN)
+| Changement de langue (FR / EN)
 |--------------------------------------------------------------------------
-| Enregistre 'fr' ou 'en' en session puis revient à la page précédente.
-| Utilisation : route('lang.switch', 'fr') / route('lang.switch', 'en')
 */
-Route::get('/lang/{locale}', function (string $locale) {
-    if (in_array($locale, ['fr', 'en'], true)) {
+Route::get('lang/{locale}', function (string $locale) {
+    if (in_array($locale, ['fr','en'], true)) {
         Session::put('locale', $locale);
     }
-    return redirect()->back();
+    return back();
 })->name('lang.switch');
 
 /*
@@ -44,29 +42,47 @@ Route::get('/dashboard', fn () => view('dashboard'))
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile',  [ProfileController::class, 'edit'])   ->name('profile.edit');
+    Route::patch('/profile',[ProfileController::class, 'update']) ->name('profile.update');
+    Route::delete('/profile',[ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 /*
 |--------------------------------------------------------------------------
-| Back-office Admin (Partie 4 : CRUD Planètes)
+| Back-office Admin (CRUD Planètes) — Spatie
 |--------------------------------------------------------------------------
-| Gate 'admin' défini dans App\Providers\AppServiceProvider::boot()
-| (ex: Gate::define('admin', fn(User $u) => $u->is_admin); )
+| 1) Le groupe /admin est réservé aux utilisateurs authentifiés qui ont
+|    le rôle "admin". (Tu peux mettre 'can:admin' si tu utilises un Gate.)
+| 2) Les permissions fines (view/create/update/delete) sont appliquées
+|    action par action sur la resource.
+|
+| IMPORTANT :
+| - On NE redéfinit PAS chaque route (index/create/store/...) une seconde fois.
+|   Sinon on crée des collisions et des erreurs 405.
 */
-Route::middleware(['auth', 'can:admin'])
-    ->prefix('admin')
-    ->as('admin.')
+Route::prefix('admin')
+    ->name('admin.')
+    ->middleware(['auth', 'role:admin']) // <- ou ['auth','can:admin'] si tu préfères le Gate
     ->group(function () {
-        // CRUD des planètes (pas de page 'show' côté BO)
-        Route::resource('planets', PlanetController::class)->except('show');
+
+        // Resource complète "admin.planets.*"
+        Route::resource('planets', PlanetController::class)
+            ->names('planets')
+            // Middleware de permission par action (Spatie ≥ v5)
+            ->middleware([
+                'index'   => 'permission:planets.view',
+                'show'    => 'permission:planets.view',      // si tu ajoutes show plus tard
+                'create'  => 'permission:planets.create',
+                'store'   => 'permission:planets.create',
+                'edit'    => 'permission:planets.update',
+                'update'  => 'permission:planets.update',
+                'destroy' => 'permission:planets.delete',
+            ]);
     });
 
 /*
 |--------------------------------------------------------------------------
-| Auth (Breeze)
+| Routes d’authentification (Breeze)
 |--------------------------------------------------------------------------
 */
 require __DIR__.'/auth.php';
