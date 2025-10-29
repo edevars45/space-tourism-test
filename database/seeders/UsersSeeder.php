@@ -18,7 +18,7 @@ class UsersSeeder extends Seeder
             // --- Ton compte principal (Esther admin)
             [
                 'email' => 'devarsesther@gmail.com',
-                'name' => 'Esther Admin',
+                'name' => 'Esther',
                 'password' => '123456789',   // sera hashé
                 'role' => 'admin',
             ],
