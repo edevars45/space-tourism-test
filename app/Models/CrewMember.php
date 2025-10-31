@@ -3,15 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CrewMember extends Model
 {
-        protected $fillable = [
+    use HasFactory, SoftDeletes;// nécessaire pour CrewMember::factory()
+
+    protected $fillable = [
         'slug',
-        'name',
-        'role_title',
-        'bio',
-        'image',
+        'name',        // JSON
+        'role_title',  // JSON
+        'bio',         // JSON
+        'image',       // <-- on reste sur "image" (cohérent partout)
     ];
 
     protected $casts = [
@@ -19,4 +23,10 @@ class CrewMember extends Model
         'role_title' => 'array',
         'bio'        => 'array',
     ];
+
+    // (optionnel) URL publique de l'image
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image ? asset('storage/'.$this->image) : null;
+    }
 }

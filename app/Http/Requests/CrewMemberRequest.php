@@ -8,8 +8,8 @@ use Illuminate\Validation\Rule;
 class CrewMemberRequest extends FormRequest
 {
     /**
-     * Autorisation : on laisse à true car l'accès est déjà protégé
-     * par les middlewares (auth/role/permissions) dans les routes.
+     * Autorisation : true, car l'accès est déjà protégé par les middlewares
+     * (auth/role/permissions) sur les routes admin.
      */
     public function authorize(): bool
     {
@@ -18,22 +18,15 @@ class CrewMemberRequest extends FormRequest
 
     /**
      * Règles de validation.
-     * - Le paramètre {crew} (model binding) est utilisé pour ignorer le slug courant en édition.
-     * - L'image est "required" uniquement en création (POST), sinon "nullable" en update.
+     * - {crew} (model binding) permet d'ignorer le slug courant en édition.
+     * - L'image est "required" en création (POST), "nullable" en update (PUT/PATCH).
      */
     public function rules(): array
     {
-        // Récupère l'ID du membre en cours (si édition), sinon null (création)
         $crewId = $this->route('crew')?->id;
 
-        // Règle unique sur le slug :
-        //  - table: crew_members
-        //  - colonne: slug
-        //  - ignore l'ID courant en édition
         $uniqueSlug = Rule::unique('crew_members', 'slug')->ignore($crewId);
-
-        // Image : required en POST (store), nullable en PUT/PATCH (update)
-        $imageRule = $this->isMethod('post') ? 'required' : 'nullable';
+        $imageRule  = $this->isMethod('post') ? 'required' : 'nullable';
 
         return [
             // SLUG lisible d'URL
@@ -50,16 +43,13 @@ class CrewMemberRequest extends FormRequest
             'bio.en'          => ['nullable', 'string'],
 
             // IMAGE (upload)
-            // - required en création
-            // - formats autorisés + taille max
             'image'           => [$imageRule, 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            // Optionnel : ajouter des contraintes de dimensions
-            // 'dimensions:max_width=3000,max_height=3000'
+            // (option) 'dimensions:max_width=3000,max_height=3000',
         ];
     }
 
     /**
-     * Messages personnalisés (plus pédagogiques).
+     * Messages d'erreurs personnalisés.
      */
     public function messages(): array
     {
@@ -82,7 +72,7 @@ class CrewMemberRequest extends FormRequest
     }
 
     /**
-     * Noms “propres” des attributs (affichage des erreurs).
+     * Noms “propres” des attributs.
      */
     public function attributes(): array
     {
@@ -99,15 +89,52 @@ class CrewMemberRequest extends FormRequest
     }
 
     /**
-     * (Optionnel) Préparer/normaliser les données avant validation.
-     * Ici, on peut forcer slug en minuscule par exemple.
+     * Pré-normalisation des données AVANT validation.
+     * Objectif : rendre le formulaire rétro-compatible avec un format simple
+     * (name/role/bio en string) et garantir un slug valide si absent.
      */
     protected function prepareForValidation(): void
     {
-        if ($this->filled('slug')) {
-            $this->merge([
-                'slug' => str()->slug($this->input('slug')), // normalise proprement
-            ]);
+        $data = $this->all();
+
+        // 1) Normaliser NAME : si "name" est une string -> JSON [fr,en]
+        if (isset($data['name']) && is_string($data['name'])) {
+            $data['name'] = [
+                'fr' => $data['name'],
+                'en' => $data['name'],
+            ];
         }
+
+        // 2) Normaliser ROLE : si "role" est une string -> role_title[fr|en]
+        if (isset($data['role']) && is_string($data['role'])) {
+            $data['role_title'] = [
+                'fr' => $data['role'],
+                'en' => $data['role'],
+            ];
+            unset($data['role']); // éviter conflit avec rules
+        }
+
+        // 3) Normaliser BIO : si "bio" est une string -> JSON [fr,en]
+        if (isset($data['bio']) && is_string($data['bio'])) {
+            $data['bio'] = [
+                'fr' => $data['bio'],
+                'en' => $data['bio'],
+            ];
+        }
+
+        // 4) Générer SLUG si absent (priorité au name.fr puis name.en)
+        if (blank($data['slug'] ?? null)) {
+            $base = data_get($data, 'name.fr') ?? data_get($data, 'name.en') ?? null;
+            if ($base) {
+                $data['slug'] = str()->slug($base);
+            }
+        }
+
+        // 5) Slug toujours “slugifié” si fourni
+        if (filled($data['slug'] ?? null)) {
+            $data['slug'] = str()->slug($data['slug']);
+        }
+
+        $this->replace($data);
     }
 }
