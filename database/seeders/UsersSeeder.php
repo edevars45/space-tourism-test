@@ -5,53 +5,68 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class UsersSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Je crée/MAJ des utilisateurs et j’assigne les rôles Spatie.
+     * Idempotent : relancer ce seeder ne duplique rien.
      */
     public function run(): void
     {
-        // Assure-toi que RolesPermissionsSeeder a tourné avant (DatabaseSeeder ci-dessous)
+        // Suppose que RolesPermissionsSeeder a déjà tourné
+        // (Dans DatabaseSeeder, appelle RolesPermissionsSeeder AVANT UsersSeeder.)
+
         $users = [
-            // --- Ton compte principal (Esther admin)
+            // --- Ton compte principal (admin)
             [
-                'email' => 'devarsesther@gmail.com',
-                'name' => 'Esther Admin',
-                'password' => '123456789',   // sera hashé
-                'role' => 'admin',
+                'email'    => 'devarsesther@gmail.com',
+                'name'     => 'esther',
+                'password' => '123456789', // sera hashé
+                'role'     => 'admin',
             ],
 
             // --- Démo / tests
             [
-                'email' => 'admin@example.com',
-                'name'  => 'Admin Demo',
+                'email'    => 'admin@example.com',
+                'name'     => 'Admin Demo',
                 'password' => 'password',
-                'role'  => 'admin',
+                'role'     => 'admin',
             ],
             [
-                'email' => 'editor@example.com',
-                'name'  => 'Titi Editor',
+                'email'    => 'planet@example.com',
+                'name'     => 'Titi Planet',
                 'password' => 'titititi',
-                'role'  => 'editor',
+                'role'     => 'planetManager',   // gestionnaire Planètes
             ],
             [
-                'email' => 'author@example.com',
-                'name'  => 'Tata Author',
+                'email'    => 'crew@example.com',
+                'name'     => 'Tata Crew',
                 'password' => 'tatatata',
-                'role'  => 'author',
+                'role'     => 'crewManager',     // gestionnaire Équipage
             ],
-            [
-                'email' => 'viewer@example.com',
-                'name'  => 'Tutu Viewer',
-                'password' => 'tutututu',
-                'role'  => 'viewer',
-            ],
+
+            // (Optionnel) ajoute d’autres rôles si tu veux
+            // [
+            //     'email'    => 'tech@example.com',
+            //     'name'     => 'Tutu Tech',
+            //     'password' => 'tutututu',
+            //     'role'     => 'techManager',  // pour Partie 6 Technologies
+            // ],
         ];
 
         foreach ($users as $u) {
-            $newUser = User::updateOrCreate(
+            // 1) S’assurer que le rôle existe (sinon on le crée côté Spatie)
+            if (!empty($u['role'])) {
+                Role::firstOrCreate([
+                    'name'       => $u['role'],
+                    'guard_name' => 'web',
+                ]);
+            }
+
+            // 2) Créer/MAJ l’utilisateur (clé = email)
+            $user = User::updateOrCreate(
                 ['email' => $u['email']],
                 [
                     'name'              => $u['name'],
@@ -60,8 +75,10 @@ class UsersSeeder extends Seeder
                 ]
             );
 
-            // Nécessite que les rôles existent déjà (donc on seed d'abord RolesPermissionsSeeder)
-            $newUser->syncRoles([$u['role']]);
+            // 3) Assigner le rôle
+            if (!empty($u['role'])) {
+                $user->syncRoles([$u['role']]);
+            }
         }
     }
 }
